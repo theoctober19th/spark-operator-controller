@@ -58,6 +58,15 @@ const (
 	// owner: @dineshkumar181094
 	// alpha: v2.6.0
 	DefaultTimeToLive featuregate.Feature = "DefaultTimeToLive"
+
+	// Spark8tSubmitter enables submitting SparkApplications with the properties that spark8t
+	// resolves for the driver service account (service account configuration and Integration
+	// Hub configuration), as the Charmed Apache Spark client tools do. It cannot be combined
+	// with the RestSubmitter feature gate.
+	//
+	// owner: @canonical
+	// alpha: v2.6.0
+	Spark8tSubmitter featuregate.Feature = "Spark8tSubmitter"
 )
 
 // To add a new feature gate, follow these steps:
@@ -102,6 +111,8 @@ var defaultFeatureGates = map[featuregate.Feature]featuregate.FeatureSpec{
 	RestSubmitter: {Default: false, PreRelease: featuregate.Alpha},
 
 	DefaultTimeToLive: {Default: false, PreRelease: featuregate.Alpha},
+
+	Spark8tSubmitter: {Default: false, PreRelease: featuregate.Alpha},
 }
 
 // SetFeatureGateDuringTest sets the specified feature gate to the specified value during a test.

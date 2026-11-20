@@ -159,6 +159,10 @@ var (
 	submitterTLSCertFile    string
 	submitterTLSKeyFile     string
 	submitterTLSCAFile      string
+
+	// spark8t submitter (behind Spark8tSubmitter feature gate)
+	spark8tPythonBinary     string
+	spark8tGetConfigTimeout time.Duration
 )
 
 func NewStartCommand() *cobra.Command {
@@ -184,6 +188,10 @@ func NewStartCommand() *cobra.Command {
 			validPrecisions := []string{"nanos", "micros", "millis", "seconds", "minutes"}
 			if !slices.Contains(validPrecisions, scheduledSparkApplicationTimestampPrecision) {
 				return fmt.Errorf("invalid value %q for --scheduled-spark-application-timestamp-precision, valid values: %v", scheduledSparkApplicationTimestampPrecision, validPrecisions)
+			}
+
+			if features.Enabled(features.RestSubmitter) && features.Enabled(features.Spark8tSubmitter) {
+				return fmt.Errorf("feature gates RestSubmitter and Spark8tSubmitter cannot be enabled together")
 			}
 
 			if features.Enabled(features.RestSubmitter) {
@@ -299,6 +307,9 @@ func NewStartCommand() *cobra.Command {
 	command.Flags().StringVar(&submitterTLSCertFile, "submitter-tls-cert-file", "", "Path to the client certificate file for mTLS with the submitter service.")
 	command.Flags().StringVar(&submitterTLSKeyFile, "submitter-tls-key-file", "", "Path to the client private key file for mTLS with the submitter service.")
 	command.Flags().StringVar(&submitterTLSCAFile, "submitter-tls-ca-file", "", "Path to the CA certificate file for verifying the submitter service.")
+	// spark8t submitter flags (used when Spark8tSubmitter feature gate is enabled)
+	command.Flags().StringVar(&spark8tPythonBinary, "spark8t-python-binary", "python3", "Python interpreter that can import spark8t, used to resolve the properties of the driver service account.")
+	command.Flags().DurationVar(&spark8tGetConfigTimeout, "spark8t-get-config-timeout", 30*time.Second, "How long to wait for spark8t to resolve the properties of the driver service account.")
 
 	flagSet := flag.NewFlagSet("controller", flag.ExitOnError)
 	ctrl.RegisterFlags(flagSet)
@@ -608,6 +619,14 @@ func newSparkConnectReconcilerOptions() sparkconnect.Options {
 }
 
 func newSparkSubmitter(ctx context.Context) (sparkapplication.SparkApplicationSubmitter, error) {
+	if features.Enabled(features.Spark8tSubmitter) {
+		logger.Info("Using spark8t submitter", "pythonBinary", spark8tPythonBinary)
+		return sparkapplication.NewSpark8tSubmitter(sparkapplication.Spark8tSubmitterConfig{
+			PythonBinary:     spark8tPythonBinary,
+			GetConfigTimeout: spark8tGetConfigTimeout,
+		}), nil
+	}
+
 	if !features.Enabled(features.RestSubmitter) {
 		return &sparkapplication.SparkSubmitter{}, nil
 	}
