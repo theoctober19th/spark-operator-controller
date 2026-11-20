@@ -1,8 +1,6 @@
 module github.com/kubeflow/spark-operator/v2
 
-go 1.25.0
-
-toolchain go1.25.11
+go 1.26.0
 
 tool k8s.io/code-generator
 
@@ -18,7 +16,7 @@ require (
 	github.com/stretchr/testify v1.11.1
 	go.uber.org/zap v1.27.0
 	golang.org/x/mod v0.35.0
-	golang.org/x/time v0.14.0
+	golang.org/x/time v0.16.0
 	gopkg.in/inf.v0 v0.9.1
 	k8s.io/api v0.35.4
 	k8s.io/apiextensions-apiserver v0.35.4
